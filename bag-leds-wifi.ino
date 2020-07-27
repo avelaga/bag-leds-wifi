@@ -45,12 +45,12 @@ void setup() {
   });
   server.on("/on", [](){
     server.send(200, "text/html", page);
-    digitalWrite(LEDPin, HIGH);
+    digitalWrite(LEDPin, LOW);
     delay(1000);
   });
   server.on("/off", [](){
     server.send(200, "text/html", page);
-    digitalWrite(LEDPin, LOW);
+    digitalWrite(LEDPin, HIGH);
     delay(1000); 
   });
   server.begin();
