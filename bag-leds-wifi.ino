@@ -44,7 +44,7 @@ void handleRoot() {
 }
 
 void setup() {
-  page = "<html><center><h1>THE COOLEST BACKPACK</h1><a href=\"0\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>Color Strobe</div></a><a href=\"1\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>Color Fade</div></a><a href=\"2\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>White Strobe</div></a><a href=\"off\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>OFF</div></a></center></html>";
+  page = "<html><center><a href=\"0\"><div style='position: fixed; width:50%;  height: 50%; left: 0; top: 0; font-size: 80px; display: flex; justify-content: center; align-items: center; color: white; background-color: red;'>Color Strobe</div></a><a href=\"1\"><div style='position: fixed; width:50%;  height: 50%; left: 50%; top: 0; font-size: 80px; display: flex; justify-content: center; align-items: center; background-color: rgb(0,255,0); color: white;'>Color Fade</div></a><a href=\"2\"><div style='position: fixed; width:50%;  height: 50%; left: 0; top: 50%; font-size: 80px; display: flex; justify-content: center; align-items: center; color: black;'>White Strobe</div></a><a href=\"off\"><div style='position: fixed; width:50%;  height: 50%; left: 50%; top: 50%; font-size: 80px; display: flex; justify-content: center; align-items: center; background-color: black; color: white;'>OFF</div></a></center></html>";
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
   LEDS.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
@@ -95,7 +95,6 @@ void setup() {
   server.begin();
   Serial.println("HTTP server started");
 }
-
 
 void checkButton() {
   buttonState = digitalRead(BUTTON_PIN);
