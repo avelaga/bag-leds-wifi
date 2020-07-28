@@ -1,6 +1,5 @@
 /*
-   Copyright (c) 2015, Majenko Technologies
-   All rights reserved.
+   Adapted from Majenko Technologies
    https://www.teachmemicro.com/simple-nodemcu-web-server/
 */
 
@@ -20,7 +19,7 @@
 #define BUTTON_PIN 2
 #define LED_PIN 16
 
-/* Set these to your desired credentials. */
+// wifi credentials
 const char *ssid = APSSID;
 const char *password = APPSK;
 
@@ -34,7 +33,7 @@ int hueInc = 0;
 int colSwitch = 0;
 int buttonState = 0;
 int recent = 0;
-int lightmode = 1;
+int lightmode = 3;
 int frames = 0;
 
 ESP8266WebServer server(80);
@@ -57,33 +56,42 @@ void setup() {
   Serial.print("Configuring access point...");
   /* You can remove the password parameter if you want the AP to be open. */
   WiFi.softAP(ssid, password);
-
   IPAddress myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(myIP);
+  
   server.on("/", []() {
     server.send(200, "text/html", page);
   });
+  
+  // color strobe
   server.on("/0", []() {
     server.send(200, "text/html", page);
     digitalWrite(LED_PIN, LOW);
     lightmode = 0;
   });
+
+  // color fade
   server.on("/1", []() {
     server.send(200, "text/html", page);
     digitalWrite(LED_PIN, LOW);
     lightmode = 1;
   });
+
+  // white strobe
   server.on("/2", []() {
     server.send(200, "text/html", page);
     digitalWrite(LED_PIN, LOW);
     lightmode = 2;
   });
+
+  // off
   server.on("/off", []() {
     server.send(200, "text/html", page);
     digitalWrite(LED_PIN, HIGH);
     lightmode = 3;
   });
+  
   server.begin();
   Serial.println("HTTP server started");
 }
@@ -96,8 +104,8 @@ void checkButton() {
       Serial.println("CHANGED");
       recent = buttonState;
 
-      if (lightmode == 0) {
-        lightmode = 1;
+      if (lightmode != 3) {
+        lightmode = 3;
       }
       else {
         lightmode = 0;
@@ -153,15 +161,7 @@ void colorStrobe() {
 }
 
 void colorFade() {
-  //  if (inc > LEN) {
-  //    isOn = !isOn;
-  //    inc = 0;
-  //    colSwitch += 20;
-  //    hueInc = colSwitch;
-  //  } else {
-  //    inc++;
   hueInc += 3;
-  //  }
 
   for (int a = NUM_LEDS - 1; a > 0; a--) {
     hue[a] = hue[a - 1];
@@ -173,13 +173,8 @@ void colorFade() {
     }
   }
 
-//  if (isOn) {
-    brightness[0] = 255;
-    hue[0] = hueInc;
-//  }
-//  else {
-//    brightness[0] = 0;
-//  }
+  brightness[0] = 255;
+  hue[0] = hueInc;
 
   // fill leds with determined pattern
   for (int x = 0; x < NUM_LEDS; x++) {
@@ -190,15 +185,11 @@ void colorFade() {
 }
 
 void whiteStrobe() {
-
   if (inc > LEN) {
     isOn = !isOn;
     inc = 0;
-    //    colSwitch += 20;
-    //    hueInc = colSwitch;
   }
   inc++;
-
 
   if (isOn) {
     for (int x = 0; x < NUM_LEDS; x++) {
@@ -210,7 +201,6 @@ void whiteStrobe() {
   }
 
   delay(15);
-
 }
 
 void loop() {
