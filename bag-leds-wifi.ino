@@ -10,7 +10,7 @@
 
 #ifndef APSSID
 #define APSSID "papi"
-#define APPSK  "b1rdlaw69"
+#define APPSK  "yourpasswordhere"
 #endif
 
 #define NUM_LEDS 20
@@ -59,11 +59,11 @@ void setup() {
   IPAddress myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(myIP);
-  
+
   server.on("/", []() {
     server.send(200, "text/html", page);
   });
-  
+
   // color strobe
   server.on("/0", []() {
     server.send(200, "text/html", page);
@@ -91,7 +91,7 @@ void setup() {
     digitalWrite(LED_PIN, HIGH);
     lightmode = 3;
   });
-  
+
   server.begin();
   Serial.println("HTTP server started");
 }
@@ -205,16 +205,18 @@ void whiteStrobe() {
 void loop() {
   server.handleClient();
   checkButton();
-  if (lightmode == 0) { // normal fade
-    colorStrobe();
-  }
-  else if (lightmode == 1) {
-    colorFade();
-  }
-  else if (lightmode == 2) {
-    whiteStrobe();
-  } else {
-    clearLeds();
+  switch (lightmode) {
+    case 0:
+      colorStrobe();
+      break;
+    case 1:
+      colorFade();
+      break;
+    case 2:
+      whiteStrobe();
+      break;
+    default:
+      clearLeds();
   }
   FastLED.show();
 }
