@@ -35,6 +35,7 @@ int colSwitch = 0;
 int buttonState = 0;
 int recent = 0;
 int lightmode = 1;
+int frames = 0;
 
 ESP8266WebServer server(80);
 
@@ -44,7 +45,7 @@ void handleRoot() {
 }
 
 void setup() {
-  page = "<html><center><h1>THE COOLEST BACKPACK</h1><a href=\"on\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin-bottom: 30px;'>ON</div></a>&nbsp;<a href=\"off\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin-bottom: 30px;'>OFF</div></a></center></html>";
+  page = "<html><center><h1>THE COOLEST BACKPACK</h1><a href=\"0\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>Color Strobe</div></a><a href=\"1\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>Color Fade</div></a><a href=\"2\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>White Strobe</div></a><a href=\"off\"><div style='width:80%;  font-size: 80px; line-height: 30%; margin: 60px;'>OFF</div></a></center></html>";
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
   LEDS.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
@@ -63,17 +64,25 @@ void setup() {
   server.on("/", []() {
     server.send(200, "text/html", page);
   });
-  server.on("/on", []() {
+  server.on("/0", []() {
     server.send(200, "text/html", page);
     digitalWrite(LED_PIN, LOW);
     lightmode = 0;
-    delay(1000);
+  });
+  server.on("/1", []() {
+    server.send(200, "text/html", page);
+    digitalWrite(LED_PIN, LOW);
+    lightmode = 1;
+  });
+  server.on("/2", []() {
+    server.send(200, "text/html", page);
+    digitalWrite(LED_PIN, LOW);
+    lightmode = 2;
   });
   server.on("/off", []() {
     server.send(200, "text/html", page);
     digitalWrite(LED_PIN, HIGH);
-    lightmode = 1;
-    delay(1000);
+    lightmode = 3;
   });
   server.begin();
   Serial.println("HTTP server started");
@@ -100,53 +109,123 @@ void checkButton() {
   }
 }
 
+void clearLeds() {
+  for (int x = 0; x < NUM_LEDS; x++) {
+    leds[x] = CHSV(0, 0, 0);
+  }
+}
+
+void colorStrobe() {
+  if (inc > LEN) {
+    isOn = !isOn;
+    inc = 0;
+    colSwitch += 20;
+    hueInc = colSwitch;
+  } else {
+    inc++;
+    hueInc += 3;
+  }
+
+  for (int a = NUM_LEDS - 1; a > 0; a--) {
+    hue[a] = hue[a - 1];
+    if (brightness[a - 1] == 255) {
+      brightness[a] = 255;
+    }
+    else {
+      brightness[a] = 0;
+    }
+  }
+
+  if (isOn) {
+    brightness[0] = 255;
+    hue[0] = hueInc;
+  }
+  else {
+    brightness[0] = 0;
+  }
+
+  // fill leds with determined pattern
+  for (int x = 0; x < NUM_LEDS; x++) {
+    leds[x] = CHSV(hue[x], 255, brightness[x]);
+  }
+
+  delay(15);
+}
+
+void colorFade() {
+  //  if (inc > LEN) {
+  //    isOn = !isOn;
+  //    inc = 0;
+  //    colSwitch += 20;
+  //    hueInc = colSwitch;
+  //  } else {
+  //    inc++;
+  hueInc += 3;
+  //  }
+
+  for (int a = NUM_LEDS - 1; a > 0; a--) {
+    hue[a] = hue[a - 1];
+    if (brightness[a - 1] == 255) {
+      brightness[a] = 255;
+    }
+    else {
+      brightness[a] = 0;
+    }
+  }
+
+//  if (isOn) {
+    brightness[0] = 255;
+    hue[0] = hueInc;
+//  }
+//  else {
+//    brightness[0] = 0;
+//  }
+
+  // fill leds with determined pattern
+  for (int x = 0; x < NUM_LEDS; x++) {
+    leds[x] = CHSV(hue[x], 255, brightness[x]);
+  }
+
+  delay(15);
+}
+
+void whiteStrobe() {
+
+  if (inc > LEN) {
+    isOn = !isOn;
+    inc = 0;
+    //    colSwitch += 20;
+    //    hueInc = colSwitch;
+  }
+  inc++;
+
+
+  if (isOn) {
+    for (int x = 0; x < NUM_LEDS; x++) {
+      leds[x] = CRGB(255, 255, 255);
+    }
+  }
+  else {
+    clearLeds();
+  }
+
+  delay(15);
+
+}
+
 void loop() {
   server.handleClient();
   checkButton();
   if (lightmode == 0) { // normal fade
-    if (inc > LEN) {
-      isOn = !isOn;
-      inc = 0;
-      colSwitch += 20;
-
-      hueInc = colSwitch;
-
-    } else {
-      inc++;
-      hueInc += 3;
-    }
-
-    for (int a = NUM_LEDS - 1; a > 0; a--) {
-      hue[a] = hue[a - 1];
-
-      if (brightness[a - 1] == 255) {
-        brightness[a] = 255;
-      }
-      else {
-        brightness[a] = 0;
-      }
-
-    }
-
-    if (isOn) {
-      brightness[0] = 255;
-      hue[0] = hueInc;
-    }
-    else {
-      brightness[0] = 0;
-    }
-
-    // fill leds with determined pattern
-    for (int x = 0; x < NUM_LEDS; x++) {
-      leds[x] = CHSV(hue[x], 255, brightness[x]);
-    }
-
-    delay(15);
-    FastLED.show();
-  } else {
-    for (int x = 0; x < NUM_LEDS; x++) {
-      leds[x] = CHSV(0, 0, 0);
-    }
-    FastLED.show();
+    colorStrobe();
   }
+  else if (lightmode == 1) {
+    colorFade();
+  }
+  else if (lightmode == 2) {
+    whiteStrobe();
+  } else {
+    clearLeds();
+  }
+  FastLED.show();
 }
