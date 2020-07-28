@@ -1,6 +1,7 @@
 /*
    Adapted from Majenko Technologies
    https://www.teachmemicro.com/simple-nodemcu-web-server/
+   Copyright 2020 Abhi Velaga
 */
 
 #include <ESP8266WiFi.h>
