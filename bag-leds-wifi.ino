@@ -1,24 +1,37 @@
 /*
-   Adapted from Majenko Technologies
-   https://www.teachmemicro.com/simple-nodemcu-web-server/
-   Copyright 2020 Abhi Velaga
+   Developed by Abhi Velaga
+   www.abhi.work
+   abhinav.velaga@utexas.edu
 */
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <FastLED.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_LIS3DH.h>
+#include <Adafruit_Sensor.h>
 
-#ifndef APSSID
 #define APSSID "papi"
-#define APPSK  "yourpasswordhere"
-#endif
+#define APPSK  "milksteak"
 
 #define NUM_LEDS 20
-#define DATA_PIN D4
 #define LEN 8
-#define BUTTON_PIN 2
 #define LED_PIN 16
+
+// Used for software SPI
+#define LIS3DH_CLK 13
+#define LIS3DH_MISO 12
+#define LIS3DH_MOSI 11
+// Used for hardware & software SPI
+#define LIS3DH_CS 10
+
+// labeled as D4 on nodemcu
+#define DATA_PIN D2
+
+// labeled as D7 on node mcu
+//#define BUTTON_PIN 3
 
 // wifi credentials
 const char *ssid = APSSID;
@@ -34,10 +47,11 @@ int hueInc = 0;
 int colSwitch = 0;
 int buttonState = 0;
 int recent = 0;
-int lightmode = 3;
+int lightmode = 0;
 int frames = 0;
 
 ESP8266WebServer server(80);
+Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
 // http://192.168.4.1
 void handleRoot() {
@@ -45,12 +59,21 @@ void handleRoot() {
 }
 
 void setup() {
+  if (! lis.begin(0x18)) {   // change this to 0x19 for alternative i2c address
+    Serial.println("Couldnt find accelerometer");
+    while (1) yield();
+  }
+  Serial.println("Accelerometer found!");
+  // lis.setRange(LIS3DH_RANGE_4_G);   // 2, 4, 8 or 16 G! 2G by default
+  Serial.print("Range = "); Serial.print(2 << lis.getRange());
+  Serial.println("G");
+  
   page = "<html><center><a href=\"0\"><div style='position: fixed; width:50%;  height: 50%; left: 0; top: 0; font-size: 80px; display: flex; justify-content: center; align-items: center; color: white; background-color: red;'>Color Strobe</div></a><a href=\"1\"><div style='position: fixed; width:50%;  height: 50%; left: 50%; top: 0; font-size: 80px; display: flex; justify-content: center; align-items: center; background-color: rgb(0,255,0); color: white;'>Color Fade</div></a><a href=\"2\"><div style='position: fixed; width:50%;  height: 50%; left: 0; top: 50%; font-size: 80px; display: flex; justify-content: center; align-items: center; color: black;'>White Strobe</div></a><a href=\"off\"><div style='position: fixed; width:50%;  height: 50%; left: 50%; top: 50%; font-size: 80px; display: flex; justify-content: center; align-items: center; background-color: black; color: white;'>OFF</div></a></center></html>";
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
   LEDS.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
   LEDS.setBrightness(255);
-  pinMode(BUTTON_PIN, INPUT);
+//  pinMode(BUTTON_PIN, INPUT);
   delay(1000);
   Serial.begin(115200);
   Serial.println();
@@ -97,25 +120,25 @@ void setup() {
   Serial.println("HTTP server started");
 }
 
-void checkButton() {
-  buttonState = digitalRead(BUTTON_PIN);
-  if (buttonState != recent) {
-    if (buttonState == 1) {
-      Serial.println("CHANGED");
-      recent = buttonState;
-
-      if (lightmode != 3) {
-        lightmode = 3;
-      }
-      else {
-        lightmode = 0;
-      }
-    }
-    else {
-      recent = 0; // reset for letting go of button
-    }
-  }
-}
+//void checkButton() {
+//  buttonState = digitalRead(BUTTON_PIN);
+//  if (buttonState != recent) {
+//    if (buttonState == 1) {
+//      Serial.println("CHANGED");
+//      recent = buttonState;
+//
+//      if (lightmode != 3) {
+//        lightmode = 3;
+//      }
+//      else {
+//        lightmode = 0;
+//      }
+//    }
+//    else {
+//      recent = 0; // reset for letting go of button
+//    }
+//  }
+//}
 
 void clearLeds() {
   for (int x = 0; x < NUM_LEDS; x++) {
@@ -203,9 +226,24 @@ void whiteStrobe() {
   delay(15);
 }
 
+void checkAcceleration(){
+  /* get a new sensor event, normalized */
+  sensors_event_t event;
+  lis.getEvent(&event);
+
+  /* Display the results (acceleration is measured in m/s^2) */
+//  Serial.print("\t\tX: "); Serial.print(event.acceleration.x);
+//  Serial.print(" \tY: "); Serial.print(event.acceleration.y);
+//  Serial.print(" \tZ: "); Serial.print(event.acceleration.z);
+//  Serial.println(" m/s^2 ");
+//
+//  Serial.println();
+}
+
 void loop() {
   server.handleClient();
-  checkButton();
+//  checkButton();
+  checkAcceleration();
   switch (lightmode) {
     case 0:
       colorStrobe();
